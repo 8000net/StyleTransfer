@@ -39,11 +39,10 @@ def get_vgg_features(input, layers):
     # we can't pass input_shape=input.shape
     #
     # Possible solutions:
-    #   - Use VGG default input size and reshape tensor?
+    #   - Use fixed input size and reshape tensor?
     #   - Recreate VGG from scratch, or pass input tensor through layers?
     #
-    print(input)
-    vgg = VGG19(include_top=False, input_shape=input.shape[1:])
+    vgg = VGG19(include_top=False, input_shape=(256, 256, 3))
     outputs = [layer.output for layer in vgg.layers if layer.name in layers]
     return outputs
 
