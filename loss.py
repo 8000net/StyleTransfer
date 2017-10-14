@@ -1,4 +1,4 @@
-# TODO: write this functions with symbolic backend functions
+# TODO: write these functions with symbolic backend functions
 
 from keras.applications.vgg19 import VGG19
 from keras.applications import vgg19
@@ -23,8 +23,25 @@ def l2_loss(x):
 
 
 def get_vgg_features(input, layers):
-    # TODO: this needs to handle symbolic tensors?
-    vgg = VGG19(include_top=False, input_tensor=input)
+    # TODO: this needs to handle symbolic tensors
+
+    # When model is compiled, input will be a symbolic tensor
+    # from the last layer in the model.
+    #
+    # We can't pass input straight to VGG with input_tensor,
+    # because input_tensor expects an Input layer only,
+    # other load_weights() fails, because the weights are
+    # for 16 layers, but the model now has 16 + n layers
+    #
+    # Shape is not known at compile time either, so
+    # we can't pass input_shape=input.shape
+    #
+    # Possible solutions:
+    #   - Use VGG default input size and reshape tensor?
+    #   - Recreate VGG from scratch, or pass input tensor through layers?
+    #
+    print(input)
+    vgg = VGG19(include_top=False, input_shape=input.shape[1:])
     outputs = [layer.output for layer in vgg.layers if layer.name in layers]
     return outputs
 
