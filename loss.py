@@ -1,4 +1,5 @@
 # TODO: write these functions with symbolic backend functions
+from functools import reduce
 
 from keras.applications.vgg19 import VGG19
 from keras.applications import vgg19
@@ -22,8 +23,7 @@ def tensor_size(x):
     return np.nanprod(np.array(K.int_shape(x), dtype=np.float))
 
 def l2_loss(x):
-    return np.sum(x**2) / 2
-
+    return K.sum(K.square(x)) / 2
 
 def get_vgg_features(input, layers):
     # TODO: this needs to handle symbolic tensors
@@ -82,35 +82,43 @@ def calculate_style_loss(style_image, reconstructed_image, style_weight):
     style_grams = []
     style_rec_grams = []
     for features in style_vgg_features:
+        _, h, w, filters = features.shape
 
         # shape in K.reshape needs to be np.array to convert Dimension to int
         # (should be fixed in newer versions of Tensorflow)
-        features = K.reshape(features, np.array((-1, features.shape[3])))
+        features = K.reshape(features, np.array((1, h * w, filters)))
 
         features_size = tensor_size(features)
-        gram = tf.matmul(K.transpose(features), features) / features_size
+        features_T = tf.transpose(features, perm=[0,2,1])
+        gram = tf.matmul(features_T, features) / features_size
         style_grams.append(gram)
         
     for features in reconstructed_style_vgg_features:
-        batch_size, h, w, filters = features.shape
-        features = K.reshape(features, np.array((batch_size, h * w, filters)))
+        _, h, w, filters = features.shape
+
+        # Need to know batch_size ahead of time
+        features = K.reshape(features, np.array((BATCH_SIZE, h * w, filters)))
+
         features_size = tensor_size(features)
-        gram = np.matmul(K.transpose(features), features) / features_size
+        features_T = tf.transpose(features, perm=[0,2,1])
+        gram = tf.matmul(features_T, features) / features_size
         style_rec_grams.append(gram)       
         
     # Style loss
-    style_loss = 0
-    for style_gram, style_rec_grams in zip(style_grams, style_rec_grams):
-        style_loss += 2 * l2_loss(style_gram - style_rec_gram) / style_gram.size
+    style_losses = []
+    for style_gram, style_rec_gram in zip(style_grams, style_rec_grams):
+        style_gram_size = tensor_size(style_gram)
+        l2 = l2_loss(style_gram - style_rec_gram)
+        style_losses.append(2 * l2 / style_gram_size)
     
-    style_loss *= style_weight
+    style_loss = style_weight * reduce(tf.add, style_losses) / BATCH_SIZE
     
     return style_loss
     
     
-def calculate_tv_loss(x):
-    tv_y_size = x[:,1:,:,:].size
-    tv_x_size = x[:,:,1:,:].size
+def calculate_tv_loss(x, tv_weight):
+    tv_y_size = tensor_size(x[:,1:,:,:])
+    tv_x_size = tensor_size(x[:,:,1:,:])
     y_tv = l2_loss(x[:,1:,:,:] - x[:,:BATCH_SHAPE[1]-1,:,:])
     x_tv = l2_loss(x[:,:,1:,:] - x[:,:,:BATCH_SHAPE[2]-1,:])
     tv_loss = tv_weight*2*(x_tv/tv_x_size + y_tv/tv_y_size)/BATCH_SIZE
