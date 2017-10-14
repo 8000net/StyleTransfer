@@ -6,6 +6,7 @@ from keras.models import Model
 from keras.layers import Input
 from keras import backend as K
 import numpy as np
+import tensorflow as tf
 
 STYLE_LAYERS = ('block1_conv1', 'block2_conv1',
                 'block3_conv1', 'block4_conv1',
@@ -81,14 +82,20 @@ def calculate_style_loss(style_image, reconstructed_image, style_weight):
     style_grams = []
     style_rec_grams = []
     for features in style_vgg_features:
-        features = np.reshape(features, (-1, features.shape[3]))
-        gram = np.matmul(features.T, features) / features.size
+
+        # shape in K.reshape needs to be np.array to convert Dimension to int
+        # (should be fixed in newer versions of Tensorflow)
+        features = K.reshape(features, np.array((-1, features.shape[3])))
+
+        features_size = tensor_size(features)
+        gram = tf.matmul(K.transpose(features), features) / features_size
         style_grams.append(gram)
         
     for features in reconstructed_style_vgg_features:
         batch_size, h, w, filters = features.shape
-        features = np.reshape(features, (batch_size, h * w, filters))
-        gram = np.matmul(features.T, features) / features.size
+        features = K.reshape(features, np.array((batch_size, h * w, filters)))
+        features_size = tensor_size(features)
+        gram = np.matmul(K.transpose(features), features) / features_size
         style_rec_grams.append(gram)       
         
     # Style loss
