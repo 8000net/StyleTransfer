@@ -17,6 +17,8 @@ CONTENT_LAYER = 'block4_conv2'
 BATCH_SIZE = 1
 BATCH_SHAPE = (BATCH_SIZE, 256, 256, 3)
 
+def tensor_size(x):
+    return np.nanprod(np.array(K.int_shape(x), dtype=np.float))
 
 def l2_loss(x):
     return np.sum(x**2) / 2
@@ -62,9 +64,10 @@ def calculate_content_loss(content_image, reconstructed_image, content_weight):
     content_features = get_vgg_features(content_image, CONTENT_LAYER)[0]
     reconstructed_content_features = get_vgg_features(
             reconstructed_image, CONTENT_LAYER)[0]
-    
+   
+    content_size = tensor_size(content_features)
     content_loss = content_weight * (2 * l2_loss(
-        reconstructed_content_vgg_features - content_features) / content_size)
+        reconstructed_content_features - content_features) / content_size)
     
     return content_loss
     
