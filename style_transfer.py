@@ -22,7 +22,7 @@ def create_gen(img_dir, target_size, batch_size):
         for img in gen:
             yield (img, img)
 
-    return tuple_gen
+    return tuple_gen()
 
 style_img_path = 'wave.jpg'
 style_img = image.load_img(style_img_path)
@@ -51,3 +51,4 @@ model.compile(optimizer='adam', loss=loss_fn)
 
 gen = create_gen('data', target_size=(256, 256), batch_size=1)
 model.fit_generator(gen, steps_per_epoch=82783)
+model.save('wave.h5')
