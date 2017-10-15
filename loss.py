@@ -6,9 +6,7 @@ from keras import backend as K
 import numpy as np
 import tensorflow as tf
 
-from vgg import VGG19
-#from keras.applications.vgg19 import VGG19
-#from keras.applications import vgg19
+from vgg import VGG19, preprocess_input
 
 STYLE_LAYERS = ('block1_conv1', 'block2_conv1',
                 'block3_conv1', 'block4_conv1',
@@ -29,9 +27,9 @@ def l2_loss(x):
     return K.sum(K.square(x)) / 2
 
 def get_vgg_features(input, layers, input_shape):
-    # TODO: vgg preprocess input
     if len(K.int_shape(input)) == 3:
         input = K.expand_dims(input, axis=0)
+    input = preprocess_input(input)
     vgg = VGG19(input, input_shape)
     outputs = [layer.output for layer in vgg.layers if layer.name in layers]
     return outputs

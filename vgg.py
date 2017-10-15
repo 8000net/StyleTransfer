@@ -7,6 +7,7 @@ import numpy as np
 
 WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
+MEAN_PIXEL = np.array([ 123.68, 116.779, 103.939])
 
 def vgg_layers(img_input, input_shape):
     # Block 1
@@ -71,3 +72,7 @@ def VGG19(img_input, input_shape):
     model = Model(img_input, vgg_layers(img_input, input_shape), name='vgg19')
     model = load_weights(model)
     return model
+
+
+def preprocess_input(x):
+    return x - MEAN_PIXEL
