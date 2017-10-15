@@ -1,7 +1,9 @@
 from keras.models import Model
+import keras.backend as K
 from keras.layers import Input
 from keras.preprocessing import image
 from scipy.misc import imresize
+import numpy as np
 
 from transform import TransformNet
 from loss import create_loss_fn
@@ -26,12 +28,15 @@ content_img = imresize(content_img, (256, 256, 3))
 content_target = image.img_to_array(content_img)
 
 # Set 
-# K.set_learning_phase(1)
+K.set_learning_phase(1)
 
 inputs = Input(shape=(256, 256, 3))
 transform_net = TransformNet(inputs)
 model = Model(inputs=inputs, outputs=transform_net)
 loss_fn = create_loss_fn(style_target, CONTENT_WEIGHT, STYLE_WEIGHT, TV_WEIGHT)
-#model.compile(optimizer='adam', loss=loss_fn)
+model.compile(optimizer='adam', loss=loss_fn)
 
-#print(get_vgg_features(content_target, CONTENT_LAYER))
+content_target = np.expand_dims(content_target, axis=0)
+X = [content_target]
+y = [content_target]
+model.fit(X, y)

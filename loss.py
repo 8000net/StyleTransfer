@@ -1,19 +1,22 @@
-# TODO: write these functions with symbolic backend functions
 from functools import reduce
 
-from keras.applications.vgg19 import VGG19
-from keras.applications import vgg19
-from keras.models import Model
+from keras.models import Model, Sequential
 from keras.layers import Input
 from keras import backend as K
 import numpy as np
 import tensorflow as tf
+
+from vgg import VGG19
+#from keras.applications.vgg19 import VGG19
+#from keras.applications import vgg19
 
 STYLE_LAYERS = ('block1_conv1', 'block2_conv1',
                 'block3_conv1', 'block4_conv1',
                 'block5_conv1')
 
 CONTENT_LAYER = 'block4_conv2'
+
+CONTENT_TRAINING_SIZE = (256, 256, 3)
 
 # TODO: remove need for this
 BATCH_SIZE = 1
@@ -25,45 +28,21 @@ def tensor_size(x):
 def l2_loss(x):
     return K.sum(K.square(x)) / 2
 
-def get_vgg_features(input, layers):
-    # TODO: this needs to handle symbolic tensors
-
-    # When model is compiled, input will be a symbolic tensor
-    # from the last layer in the model.
-    #
-    # We can't pass input straight to VGG with input_tensor,
-    # because input_tensor expects an Input layer only,
-    # other load_weights() fails, because the weights are
-    # for 16 layers, but the model now has 16 + n layers
-    #
-    # Shape is not known at compile time either, so
-    # we can't pass input_shape=input.shape
-    #
-    # Possible solutions:
-    #   - Use fixed input size and reshape tensor?
-    #   - Recreate VGG from scratch, or pass input tensor through layers?
-    #
-    vgg = VGG19(include_top=False, input_shape=(256, 256, 3))
+def get_vgg_features(input, layers, input_shape):
+    # TODO: vgg preprocess input
+    if len(K.int_shape(input)) == 3:
+        input = K.expand_dims(input, axis=0)
+    vgg = VGG19(input, input_shape)
     outputs = [layer.output for layer in vgg.layers if layer.name in layers]
     return outputs
+  
 
-    # This works on np arrays:
-    #
-    #vgg = VGG19(include_top=False, input_shape=input.shape)
-    #
-    #input = np.expand_dims(input, axis=0)
-    #input = vgg19.preprocess_input(input)   
-
-    #inp = vgg.input
-    #outputs = [layer.output for layer in vgg.layers if layer.name in layers]
-    #functor = K.function([inp]+ [K.learning_phase()], outputs )
-    #return functor([input, 1.])
-   
-
-def calculate_content_loss(content_image, reconstructed_image, content_weight):
-    content_features = get_vgg_features(content_image, CONTENT_LAYER)[0]
+def calculate_content_loss(content_image, reconstructed_image,
+                           content_weight, image_shape):
+    content_features = get_vgg_features(
+            content_image, CONTENT_LAYER, image_shape)[0]
     reconstructed_content_features = get_vgg_features(
-            reconstructed_image, CONTENT_LAYER)[0]
+            reconstructed_image, CONTENT_LAYER, image_shape)[0]
    
     content_size = tensor_size(content_features)
     content_loss = content_weight * (2 * l2_loss(
@@ -71,18 +50,20 @@ def calculate_content_loss(content_image, reconstructed_image, content_weight):
     
     return content_loss
     
-def calculate_style_loss(style_image, reconstructed_image, style_weight):
+def calculate_style_loss(style_image, reconstructed_image,
+                         style_weight, style_image_shape, content_image_shape):
      # Get outputs of style and content images at VGG layers
-    style_vgg_features = get_vgg_features(style_image, STYLE_LAYERS)
+    style_vgg_features = get_vgg_features(
+            style_image, STYLE_LAYERS, style_image_shape)
     reconstructed_style_vgg_features = get_vgg_features(
-            reconstructed_image, STYLE_LAYERS)
+            reconstructed_image, STYLE_LAYERS, content_image_shape)
     
     # Calculate the style features and content features
     # Style features are the gram matrices of the VGG feature maps
     style_grams = []
     style_rec_grams = []
     for features in style_vgg_features:
-        _, h, w, filters = features.shape
+        _, h, w, filters = K.int_shape(features)
 
         # shape in K.reshape needs to be np.array to convert Dimension to int
         # (should be fixed in newer versions of Tensorflow)
@@ -94,7 +75,7 @@ def calculate_style_loss(style_image, reconstructed_image, style_weight):
         style_grams.append(gram)
         
     for features in reconstructed_style_vgg_features:
-        _, h, w, filters = features.shape
+        _, h, w, filters = K.int_shape(features)
 
         # Need to know batch_size ahead of time
         features = K.reshape(features, np.array((BATCH_SIZE, h * w, filters)))
@@ -126,20 +107,25 @@ def calculate_tv_loss(x, tv_weight):
 
 
 def create_loss_fn(style_image, content_weight, style_weight, tv_weight):
+    style_image = tf.convert_to_tensor(style_image)
+
     def style_transfer_loss(y_true, y_pred):
         """
         y_true - content_image
         y_pred - reconstructed image
         """
+
         content_image = y_true
         reconstructed_image = y_pred
         
         content_loss = calculate_content_loss(content_image,
-                reconstructed_image, content_weight)
+                reconstructed_image, content_weight, CONTENT_TRAINING_SIZE)
         style_loss = calculate_style_loss(style_image,
-                reconstructed_image, style_weight)
+                reconstructed_image, style_weight, K.int_shape(style_image),
+                CONTENT_TRAINING_SIZE)
         tv_loss = calculate_tv_loss(reconstructed_image, tv_weight)
 
-        return content_loss + style_loss + tv_loss
+        loss = content_loss + style_loss + tv_loss
+        return loss
 
     return style_transfer_loss
