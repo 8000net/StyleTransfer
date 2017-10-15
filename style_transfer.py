@@ -13,6 +13,8 @@ CONTENT_WEIGHT = 0.5
 STYLE_WEIGHT = 100
 TV_WEIGHT = 200
 
+BATCH_SIZE = 4
+
 def create_gen(img_dir, target_size, batch_size):
     datagen = ImageDataGenerator()
     gen = datagen.flow_from_directory(img_dir, target_size=target_size,
@@ -41,7 +43,8 @@ K.set_learning_phase(1)
 inputs = Input(shape=(256, 256, 3))
 transform_net = TransformNet(inputs)
 model = Model(inputs=inputs, outputs=transform_net)
-loss_fn = create_loss_fn(style_target, CONTENT_WEIGHT, STYLE_WEIGHT, TV_WEIGHT)
+loss_fn = create_loss_fn(style_target, CONTENT_WEIGHT,
+                         STYLE_WEIGHT, TV_WEIGHT, BATCH_SIZE)
 model.compile(optimizer='adam', loss=loss_fn)
 
 #content_target = np.expand_dims(content_target, axis=0)
@@ -49,6 +52,6 @@ model.compile(optimizer='adam', loss=loss_fn)
 #y = [content_target]
 #model.fit(X, y)
 
-gen = create_gen('data', target_size=(256, 256), batch_size=1)
+gen = create_gen('data', target_size=(256, 256), batch_size=BATCH_SIZE)
 model.fit_generator(gen, steps_per_epoch=82783)
 model.save('wave.h5')
