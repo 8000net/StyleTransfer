@@ -86,7 +86,7 @@ def calculate_style_loss(style_image, reconstructed_image,
     style_losses = []
     for style_gram, style_rec_gram in zip(style_grams, style_rec_grams):
         style_gram_size = tensor_size(style_gram)
-        l2 = l2_loss(style_gram - style_rec_gram)
+        l2 = l2_loss(style_rec_gram - style_gram)
         style_losses.append(2 * l2 / style_gram_size)
     
     style_loss = style_weight * reduce(tf.add, style_losses) / batch_size
