@@ -1,8 +1,12 @@
 from keras.layers import Conv2D, Conv2DTranspose, Input, Lambda
 from keras.models import Model
 import keras.layers
+from keras.initializers import TruncatedNormal
 
 from keras_contrib.layers.normalization import InstanceNormalization
+
+WEIGHTS_INIT_STDEV = .1
+INIT = TruncatedNormal(stddev=WEIGHTS_INIT_STDEV, seed=1)
 
 def Conv2DInstanceNorm(inputs, filters, kernel_size,
                     strides=1, activation='relu'):
@@ -12,7 +16,9 @@ def Conv2DInstanceNorm(inputs, filters, kernel_size,
                 (kernel_size, kernel_size),
                 strides=strides,
                 activation=activation,
-                padding='same'
+                padding='same',
+                kernel_initializer=INIT,
+                bias_initializer=INIT
             )(inputs))
 
 def Conv2DTransposeInstanceNorm(inputs, filters, kernel_size,
@@ -23,7 +29,9 @@ def Conv2DTransposeInstanceNorm(inputs, filters, kernel_size,
                 (kernel_size, kernel_size),
                 strides=strides,
                 activation=activation,
-                padding='same'
+                padding='same',
+                kernel_initializer=INIT,
+                bias_initializer=INIT
             )(inputs))
 
 def Conv2DResidualBlock(inputs):
@@ -31,7 +39,6 @@ def Conv2DResidualBlock(inputs):
     tmp2    = Conv2DInstanceNorm(tmp, 128, 3, activation=None)
     return keras.layers.add([tmp, tmp2]) 
 
-# TODO: init weights?
 def TransformNet(inputs):
     conv1   = Conv2DInstanceNorm(inputs, 32, 9)
     conv2   = Conv2DInstanceNorm(conv1, 64, 3, strides=2)
