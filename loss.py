@@ -44,6 +44,22 @@ def calculate_content_loss(content_image, reconstructed_image,
     
     return content_loss
     
+
+def calculate_style_features_grams(features, batch_size):
+    grams = []
+    for feats in features:
+        _, h, w, filters = K.int_shape(feats)
+
+        # shape in K.reshape needs to be np.array to convert Dimension to int
+        # (should be fixed in newer versions of Tensorflow)
+        feats = K.reshape(feats, np.array((batch_size, h * w, filters)))
+
+        feats_size = tensor_size(feats)
+        feats_T = tf.transpose(feats, perm=[0,2,1])
+        gram = tf.matmul(feats_T, feats) / feats_size
+        grams.append(gram)
+    return grams
+
 def calculate_style_loss(style_image, reconstructed_image,
                          style_weight, style_image_shape, content_image_shape,
                          batch_size):
@@ -55,33 +71,10 @@ def calculate_style_loss(style_image, reconstructed_image,
     
     # Calculate the style features of the style image and output image
     # Style features are the gram matrices of the VGG feature maps
-    style_grams = []
-    style_rec_grams = []
+    style_grams = calculate_style_features_grams(style_vgg_features, 1)
+    style_rec_grams = calculate_style_features_grams(
+            reconstructed_style_vgg_features, batch_size)
 
-    # Style image style features
-    for features in style_vgg_features:
-        _, h, w, filters = K.int_shape(features)
-
-        # shape in K.reshape needs to be np.array to convert Dimension to int
-        # (should be fixed in newer versions of Tensorflow)
-        features = K.reshape(features, np.array((1, h * w, filters)))
-
-        features_size = tensor_size(features)
-        features_T = tf.transpose(features, perm=[0,2,1])
-        gram = tf.matmul(features_T, features) / features_size
-        style_grams.append(gram)
-        
-    # Output image style features
-    for features in reconstructed_style_vgg_features:
-        _, h, w, filters = K.int_shape(features)
-
-        size = h * w * filters
-        # Need to know batch_size ahead of time
-        features = K.reshape(features, np.array((batch_size, h * w, filters)))
-        features_T = tf.transpose(features, perm=[0,2,1])
-        gram = tf.matmul(features_T, features) / size
-        style_rec_grams.append(gram)       
-        
     # Calculate style loss
     style_losses = []
     for style_gram, style_rec_gram in zip(style_grams, style_rec_grams):
