@@ -46,15 +46,20 @@ def vgg_layers(img_input, input_shape):
 
     return x
 
+weights_file = None
+def cached_file_load():
+    global weights_file
+    if(weights_file is None):
+        weights_path = get_file('vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5',
+                                WEIGHTS_PATH_NO_TOP,
+                                cache_subdir='models',
+                                file_hash='253f8cb515780f3b799900260a226db6')
+        weights_file = h5py.File(weights_path)
+    return weights_file
 
 def load_weights(model):
-    weights_path = get_file('vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5',
-                            WEIGHTS_PATH_NO_TOP,
-                            cache_subdir='models',
-                            file_hash='253f8cb515780f3b799900260a226db6')
-    f = h5py.File(weights_path)
+    f = cached_file_load()
     layer_names = [name for name in f.attrs['layer_names']]
-
     for layer in model.layers:
         if layer.name in layer_names:
             g = f[layer.name]
