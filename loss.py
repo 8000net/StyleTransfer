@@ -53,10 +53,12 @@ def calculate_style_loss(style_image, reconstructed_image,
     reconstructed_style_vgg_features = get_vgg_features(
             reconstructed_image, STYLE_LAYERS, content_image_shape)
     
-    # Calculate the style features and content features
+    # Calculate the style features of the style image and output image
     # Style features are the gram matrices of the VGG feature maps
     style_grams = []
     style_rec_grams = []
+
+    # Style image style features
     for features in style_vgg_features:
         _, h, w, filters = K.int_shape(features)
 
@@ -69,6 +71,7 @@ def calculate_style_loss(style_image, reconstructed_image,
         gram = tf.matmul(features_T, features) / features_size
         style_grams.append(gram)
         
+    # Output image style features
     for features in reconstructed_style_vgg_features:
         _, h, w, filters = K.int_shape(features)
 
@@ -80,7 +83,7 @@ def calculate_style_loss(style_image, reconstructed_image,
         gram = tf.matmul(features_T, features) / features_size
         style_rec_grams.append(gram)       
         
-    # Style loss
+    # Calculate style loss
     style_losses = []
     for style_gram, style_rec_gram in zip(style_grams, style_rec_grams):
         style_gram_size = tensor_size(style_gram)
