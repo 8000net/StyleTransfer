@@ -12,7 +12,7 @@ STYLE_LAYERS = ('block1_conv1', 'block2_conv1',
                 'block3_conv1', 'block4_conv1',
                 'block5_conv1')
 
-CONTENT_LAYER = 'block4_conv2'
+CONTENT_LAYERS = ('block4_conv2',)
 
 CONTENT_TRAINING_SIZE = (256, 256, 3)
 
@@ -34,9 +34,9 @@ def get_vgg_features(input, layers, input_shape):
 def calculate_content_loss(content_image, reconstructed_image,
                            content_weight, image_shape, batch_size):
     content_features = get_vgg_features(
-            content_image, CONTENT_LAYER, image_shape)[0]
+            content_image, CONTENT_LAYERS, image_shape)[0]
     reconstructed_content_features = get_vgg_features(
-            reconstructed_image, CONTENT_LAYER, image_shape)[0]
+            reconstructed_image, CONTENT_LAYERS, image_shape)[0]
    
     content_size = tensor_size(content_features) * batch_size
     content_loss = content_weight * (2 * l2_loss(
