@@ -32,7 +32,7 @@ def get_vgg_features(input, layers, input_shape):
   
 
 def calculate_content_loss(content_image, reconstructed_image,
-                           content_weight, image_shape):
+                           content_weight, image_shape, batch_size):
     content_features = get_vgg_features(
             content_image, CONTENT_LAYER, image_shape)[0]
     reconstructed_content_features = get_vgg_features(
@@ -115,10 +115,16 @@ def create_loss_fn(style_image, content_weight,
         reconstructed_image = y_pred
         
         content_loss = calculate_content_loss(content_image,
-                reconstructed_image, content_weight, CONTENT_TRAINING_SIZE)
+                                              reconstructed_image,
+                                              content_weight,
+                                              CONTENT_TRAINING_SIZE,
+                                              batch_size)
         style_loss = calculate_style_loss(style_image,
-                reconstructed_image, style_weight, K.int_shape(style_image),
-                CONTENT_TRAINING_SIZE, batch_size)
+                                          reconstructed_image,
+                                          style_weight,
+                                          K.int_shape(style_image),
+                                          CONTENT_TRAINING_SIZE,
+                                          batch_size)
         tv_loss = calculate_tv_loss(reconstructed_image, tv_weight, batch_size)
 
         loss = content_loss + style_loss + tv_loss
