@@ -38,7 +38,7 @@ def calculate_content_loss(content_image, reconstructed_image,
     reconstructed_content_features = get_vgg_features(
             reconstructed_image, CONTENT_LAYER, image_shape)[0]
    
-    content_size = tensor_size(content_features)
+    content_size = tensor_size(content_features) * batch_size
     content_loss = content_weight * (2 * l2_loss(
         reconstructed_content_features - content_features) / content_size)
     
