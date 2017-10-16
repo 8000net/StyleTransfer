@@ -75,12 +75,11 @@ def calculate_style_loss(style_image, reconstructed_image,
     for features in reconstructed_style_vgg_features:
         _, h, w, filters = K.int_shape(features)
 
+        size = h * w * filters
         # Need to know batch_size ahead of time
         features = K.reshape(features, np.array((batch_size, h * w, filters)))
-
-        features_size = tensor_size(features)
         features_T = tf.transpose(features, perm=[0,2,1])
-        gram = tf.matmul(features_T, features) / features_size
+        gram = tf.matmul(features_T, features) / size
         style_rec_grams.append(gram)       
         
     # Calculate style loss
