@@ -5,6 +5,7 @@ from keras.preprocessing import image
 from keras.preprocessing.image import ImageDataGenerator
 from scipy.misc import imresize
 import numpy as np
+import pandas as pd
 
 from transform import TransformNet
 from loss import create_loss_fn
@@ -53,5 +54,6 @@ model.compile(optimizer='adam', loss=loss_fn)
 #model.fit(X, y)
 
 gen = create_gen('data', target_size=(256, 256), batch_size=BATCH_SIZE)
-model.fit_generator(gen, steps_per_epoch=82783)
-model.save('wave.h5')
+history = model.fit_generator(gen, steps_per_epoch=82780)
+model.save('wave-bs4.h5')
+pd.DataFrame(history.history).to_csv('wave-bs4.csv')
