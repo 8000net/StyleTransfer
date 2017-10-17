@@ -17,7 +17,7 @@ CONTENT_LAYERS = ('block4_conv2',)
 CONTENT_TRAINING_SIZE = (256, 256, 3)
 
 def tensor_size(x):
-    return np.nanprod(np.array(K.int_shape(x), dtype=np.float))
+    return tf.to_float(K.prod(K.shape(x)))
 
 def l2_loss(x):
     return K.sum(K.square(x)) / 2
