@@ -42,8 +42,6 @@ def vgg_layers(img_input, input_shape):
     x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv4')(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
 
-    x = GlobalMaxPooling2D()(x)
-
     return x
 
 
@@ -56,13 +54,12 @@ def load_weights(model):
     layer_names = [name for name in f.attrs['layer_names']]
 
     for layer in model.layers:
-        if layer.name in layer_names:
-            g = f[layer.name]
+        b_name = layer.name.encode()
+        if b_name in layer_names:
+            g = f[b_name]
             weights = [g[name] for name in g.attrs['weight_names']]
             layer.set_weights(weights)
             layer.trainable = False
-
-    return model
 
 
 def VGG19(img_input, input_shape):
@@ -70,7 +67,7 @@ def VGG19(img_input, input_shape):
     VGG19, but can take input_tensor, and load weights on VGG layers only
     """
     model = Model(img_input, vgg_layers(img_input, input_shape), name='vgg19')
-    model = load_weights(model)
+    load_weights(model)
     return model
 
 
