@@ -4,10 +4,11 @@ from keras.utils.data_utils import get_file
 import keras.backend as K
 import h5py
 import numpy as np
+import tensorflow as tf
 
 WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
-MEAN_PIXEL = np.array([ 123.68, 116.779, 103.939])
+MEAN_PIXEL = np.array([103.939, 116.779, 123.68])
 
 def vgg_layers(img_input, input_shape):
     # Block 1
@@ -72,4 +73,10 @@ def VGG19(img_input, input_shape):
 
 
 def preprocess_input(x):
+    # Convert 'RGB' -> 'BGR'
+    if type(x) is np.ndarray:
+        x = x[..., ::-1]
+    else:
+        x = tf.reverse(x, [-1])
+
     return x - MEAN_PIXEL
