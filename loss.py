@@ -22,6 +22,7 @@ def tensor_size(x):
 def l2_loss(x):
     return K.sum(K.square(x)) / 2
 
+
 def get_vgg_features(input, layers, input_shape):
     if len(K.int_shape(input)) == 3:
         input = K.expand_dims(input, axis=0)
@@ -60,10 +61,11 @@ def calculate_style_features_grams(features, batch_size):
         grams.append(gram)
     return grams
 
+
 def calculate_style_loss(style_image, reconstructed_image,
                          style_weight, style_image_shape, content_image_shape,
                          batch_size):
-     # Get outputs of style and content images at VGG layers
+    # Get outputs of style and content images at VGG layers
     style_vgg_features = get_vgg_features(
             style_image, STYLE_LAYERS, style_image_shape)
     reconstructed_style_vgg_features = get_vgg_features(
