@@ -18,7 +18,7 @@ def create_gen(img_dir, target_size, batch_size):
 
     def tuple_gen():
         for img in gen:
-            yield (img, img)
+            yield (img/255., img)
 
     return tuple_gen()
 
