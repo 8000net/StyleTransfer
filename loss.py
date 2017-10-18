@@ -62,18 +62,15 @@ def calculate_style_features_grams(features, batch_size):
     return grams
 
 
-def calculate_style_loss(style_image, reconstructed_image,
+def calculate_style_loss(style_grams, reconstructed_image,
                          style_weight, style_image_shape, content_image_shape,
                          batch_size):
     # Get outputs of style and content images at VGG layers
-    style_vgg_features = get_vgg_features(
-            style_image, STYLE_LAYERS, style_image_shape)
     reconstructed_style_vgg_features = get_vgg_features(
             reconstructed_image, STYLE_LAYERS, content_image_shape)
 
     # Calculate the style features of the style image and output image
     # Style features are the gram matrices of the VGG feature maps
-    style_grams = calculate_style_features_grams(style_vgg_features, 1)
     style_rec_grams = calculate_style_features_grams(
             reconstructed_style_vgg_features, batch_size)
 
@@ -102,6 +99,11 @@ def create_loss_fn(style_image, content_weight,
                    style_weight, tv_weight, batch_size):
     style_image = tf.convert_to_tensor(style_image)
 
+    # Precompute style features and grams
+    style_vgg_features = get_vgg_features(
+            style_image, STYLE_LAYERS, K.int_shape(style_image))
+    style_grams = calculate_style_features_grams(style_vgg_features, 1)
+
     def style_transfer_loss(y_true, y_pred):
         """
         y_true - content_image
@@ -116,7 +118,7 @@ def create_loss_fn(style_image, content_weight,
                                               content_weight,
                                               CONTENT_TRAINING_SIZE,
                                               batch_size)
-        style_loss = calculate_style_loss(style_image,
+        style_loss = calculate_style_loss(style_grams,
                                           reconstructed_image,
                                           style_weight,
                                           K.int_shape(style_image),
