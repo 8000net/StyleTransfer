@@ -10,6 +10,12 @@ WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases
 
 MEAN_PIXEL = np.array([103.939, 116.779, 123.68])
 
+weights_path = get_file('vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5',
+                        WEIGHTS_PATH_NO_TOP,
+                        cache_subdir='models',
+                        file_hash='253f8cb515780f3b799900260a226db6')
+WEIGHTS_FILE = h5py.File(weights_path)
+
 def vgg_layers(img_input, input_shape):
     # Block 1
     img_input = Input(tensor=img_input, shape=input_shape)
@@ -47,11 +53,7 @@ def vgg_layers(img_input, input_shape):
 
 
 def load_weights(model):
-    weights_path = get_file('vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5',
-                            WEIGHTS_PATH_NO_TOP,
-                            cache_subdir='models',
-                            file_hash='253f8cb515780f3b799900260a226db6')
-    f = h5py.File(weights_path)
+    f = WEIGHTS_FILE
     layer_names = [name for name in f.attrs['layer_names']]
 
     for layer in model.layers:
