@@ -33,6 +33,7 @@ if __name__ == '__main__':
     test_img_path = 'doge.jpg'
     model_output_path = 'wave.h5'
     train_path = 'data'
+    epochs = 2
 
     # Needed so that certain layers function in training mode (batch norm)
     K.set_learning_phase(1)
@@ -71,7 +72,7 @@ if __name__ == '__main__':
 
     gen = create_gen(train_path, target_size=(256, 256), batch_size=batch_size)
     output_preview = OutputPreview(test_img_path, increment=preview_increment)
-    history = model.fit_generator(gen, steps_per_epoch=82780,
+    history = model.fit_generator(gen, steps_per_epoch=82780, epochs=2,
                                   callbacks=[output_preview])
 
     model.save(model_output_path)
