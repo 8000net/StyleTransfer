@@ -23,19 +23,19 @@ def create_gen(img_dir, target_size, batch_size):
     return tuple_gen()
 
 
-def debug(style_img_path, test_img_path, content_weight,
-        style_weight, tv_weight, n_gen, preview_increment):
+if __name__ == '__main__':
+    content_weight = 7.5
+    style_weight = 100
+    tv_weight = 200
+    batch_size = 4
+    preview_increment = 50
+    style_img_path = 'wave.jpg'
+    test_img_path = 'doge.jpg'
+    model_output_path = 'wave.h5'
+    train_path = 'data'
 
-    def debug_gen(test_img_path, n):
-        content_img = image.load_img(test_img_path)
-        content_img = imresize(content_img, (256, 256, 3))
-        content_target = image.img_to_array(content_img)
-        content_target = np.expand_dims(content_target, axis=0)
-
-        for i in range(n):
-            yield (content_target, content_target)
-        return 
-
+    # Needed so that certain layers function in training mode (batch norm)
+    K.set_learning_phase(1)
 
     # This needs to be in scope where model is defined
     class OutputPreview(Callback):
@@ -57,23 +57,8 @@ def debug(style_img_path, test_img_path, content_weight,
             self.batch_num += 1
 
 
-    style_img = image.load_img(style_img_path)
-    style_target = image.img_to_array(style_img)
-
-    inputs = Input(shape=(256, 256, 3))
-    transform_net = TransformNet(inputs)
-    model = Model(inputs=inputs, outputs=transform_net)
-    loss_fn = create_loss_fn(style_target, content_weight,
-                             style_weight, tv_weight, 1)
-    model.compile(optimizer='adam', loss=loss_fn)
-
-    gen = debug_gen(test_img_path, n_gen)
-    output_preview = OutputPreview(test_img_path, increment=preview_increment)
-    model.fit_generator(gen, steps_per_epoch=100,
-                        callbacks=[output_preview])
 
 
-def test(style_img_path, content_weight, style_weight, tv_weight, batch_size):
     style_img = image.load_img(style_img_path)
     style_target = image.img_to_array(style_img)
 
@@ -84,28 +69,11 @@ def test(style_img_path, content_weight, style_weight, tv_weight, batch_size):
                              style_weight, tv_weight, batch_size)
     model.compile(optimizer='adam', loss=loss_fn)
 
-    gen = create_gen('data', target_size=(256, 256), batch_size=BATCH_SIZE)
-    output_preview = OutputPreview('doge.jpg', increment=50)
+    gen = create_gen(train_path, target_size=(256, 256), batch_size=batch_size)
+    output_preview = OutputPreview(test_img_path, increment=preview_increment)
     history = model.fit_generator(gen, steps_per_epoch=82780,
                                   callbacks=[output_preview])
 
-    model.save('wave-bs4.h5')
-    pd.DataFrame(history.history).to_csv('wave-bs4.csv')
+    model.save(model_output_path)
+    #pd.DataFrame(history.history).to_csv('wave.csv')
 
-
-
-def main():
-    content_weight = 0.5
-    style_weight = 100
-    tv_weight = 200
-    batch_size = 4
-
-    # Needed so that certain layers function in training mode (batch norm)
-    K.set_learning_phase(1)
-
-    debug('wave.jpg', 'doge.jpg', content_weight,
-          style_weight, tv_weight, 100, 5)
-
-
-if __name__ == '__main__':
-    main()
