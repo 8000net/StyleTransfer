@@ -23,6 +23,7 @@ python train.py --style wave.jpg --model-output wave.h5
 ```
   --style STYLE                     style image path
   --model-output MODEL_OUTPUT       path to save the trained model out as a h5 file
+  --model-input MODEL_INPUT         path to model to train (if continuing training)
   --test TEST                       test image path, if given will style this image 
                                     after every test-increment and save into test-dir
   --test-dir TEST_DIR               test image save dir
