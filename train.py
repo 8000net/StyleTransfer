@@ -20,6 +20,11 @@ def build_parser():
                         dest='model_output', help='model output path',
                         metavar='MODEL_OUTPUT', required=True)
 
+    parser.add_argument('--model-input', type=str,
+                        dest='model_input',
+                        help='path to model to train (if continuing training)',
+                        metavar='MODEL_INPUT', required=False)
+
     parser.add_argument('--test', type=str,
                         dest='test', help='test image path',
                         metavar='TEST', default=False)
@@ -76,6 +81,8 @@ def check_opts(opts):
         assert os.path.exists(opts.test_dir), "test directory not found!"
     if opts.test:
         assert options.test_dir != False, "test output dir must be given with test"
+    if opts.model_input:
+        assert os.path.exists(opts.model_input), "input model path not found!"
     assert opts.epochs > 0
     assert opts.batch_size > 0
     assert opts.content_weight >= 0
@@ -155,6 +162,9 @@ loss_fn = create_loss_fn(style_target, options.content_weight,
                          options.style_weight, options.tv_weight,
                          options.batch_size)
 model.compile(optimizer='adam', loss=loss_fn)
+
+if options.model_input:
+    model.load_weights(options.model_input)
 
 gen = create_gen(options.train_path, target_size=(256, 256),
                  batch_size=options.batch_size)
