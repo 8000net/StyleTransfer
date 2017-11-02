@@ -117,6 +117,9 @@ def create_gen(img_dir, target_size, batch_size):
 
     def tuple_gen():
         for img in gen:
+            if img.shape[0] != batch_size:
+                continue
+
             # (X, y)
             # X will go through TransformNet,
             # y will go through VGG
