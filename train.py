@@ -7,8 +7,6 @@ TV_WEIGHT = 2e2
 BATCH_SIZE = 4
 NUM_EPOCHS = 2
 TRAIN_PATH = 'data'
-# num images in MSCOCO / 4 (default batch size)
-STEPS_PER_EPOCH = 20695
 
 def build_parser():
     parser = ArgumentParser()
@@ -53,7 +51,7 @@ def build_parser():
                         dest='steps_per_epoch',
                         help='number of batches of samples per epoch, ' + \
                              '(should be # of samples / batch size)',
-                        metavar='BATCH_SIZE', default=STEPS_PER_EPOCH)
+                        metavar='BATCH_SIZE', default=None)
 
     parser.add_argument('--content-weight', type=float,
                         dest='content_weight',
@@ -108,6 +106,7 @@ import tensorflow as tf
 
 from transform import TransformNet
 from loss import create_loss_fn
+from util import count_num_samples
 
 
 def create_gen(img_dir, target_size, batch_size):
@@ -171,6 +170,11 @@ if options.model_input:
 
 gen = create_gen(options.train_path, target_size=(256, 256),
                  batch_size=options.batch_size)
+
+if options.steps_per_epoch is None:
+    num_samples = count_num_samples(options.train_path)
+    options.steps_per_epoch = num_samples // options.batch_size
+
 callbacks = None
 if options.test:
     callbacks = [OutputPreview(options.test, options.test_increment,
