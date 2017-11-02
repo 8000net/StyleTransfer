@@ -21,4 +21,6 @@ def count_num_samples(directory):
     num_samples = sum(pool.map(function_partial,
                                (os.path.join(directory, subdir)
                                 for subdir in classes)))
+    pool.close()
+    pool.join()
     return num_samples
